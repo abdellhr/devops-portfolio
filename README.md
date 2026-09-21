@@ -1,11 +1,6 @@
 # DevOps Portfolio — Infra as Code, CI/CD & Observabilité
 
-![CI/CD](https://github.com/USERNAME/devops-portfolio/actions/workflows/ci-cd.yml/badge.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-
 Projet de démonstration illustrant une chaîne DevOps complète, du provisionnement de l'infrastructure jusqu'au monitoring, en passant par l'intégration continue et le scan de sécurité.
-
-> Remplacer `USERNAME` dans le badge ci-dessus par ton nom d'utilisateur GitHub une fois le dépôt créé.
 
 ## Architecture
 
@@ -34,7 +29,7 @@ App Flask → Prometheus (métriques) → Grafana (dashboards)
 ## Lancer le projet en local
 
 ```bash
-git clone https://github.com/USERNAME/devops-portfolio.git
+git clone https://github.com/abdellhr/devops-portfolio.git
 cd devops-portfolio
 docker compose up --build
 ```
@@ -95,7 +90,3 @@ Chaque push sur `main` déclenche automatiquement :
 - Ajouter des dashboards Grafana pré-configurés (JSON versionné)
 - Passer à Kubernetes (Helm chart) pour la partie orchestration
 - Ajouter des tests d'intégration bout en bout dans la CI
-
-## Licence
-
-MIT — voir [LICENSE](LICENSE)
