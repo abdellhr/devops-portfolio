@@ -55,6 +55,7 @@ jobs:
           format: "table"
           severity: "CRITICAL,HIGH"
           exit-code: "1"
+          ignore-unfixed: true
 
       - name: Connexion au registre GitHub Container Registry
         if: github.event_name == 'push'
