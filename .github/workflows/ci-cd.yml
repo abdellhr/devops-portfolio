@@ -1,0 +1,93 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/devops-portfolio-app
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        working-directory: ./app
+        run: pip install -r requirements.txt
+
+      - name: Linter (flake8)
+        working-directory: ./app
+        run: |
+          pip install flake8
+          flake8 . --max-line-length=100 --exclude=__pycache__
+
+      - name: Lancer les tests unitaires
+        working-directory: ./app
+        run: pytest -v
+
+  build-scan-push:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Construire l'image Docker
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} ./app
+
+      - name: Scanner l'image avec Trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+
+      - name: Connexion au registre GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pousser l'image
+        if: github.event_name == 'push'
+        run: |
+          docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.IMAGE_NAME }}:latest
+
+  terraform-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Vérifier le formatage
+        working-directory: ./terraform
+        run: terraform fmt -check
+
+      - name: Initialiser (sans backend distant)
+        working-directory: ./terraform
+        run: terraform init -backend=false
+
+      - name: Valider la syntaxe
+        working-directory: ./terraform
+        run: terraform validate
